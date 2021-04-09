@@ -1,0 +1,92 @@
+#########################
+# Simple Cipher Library #
+#########################
+
+The library provides implementations of 5 basic cipher algorithms:
+
+Caesar's Cipher
+Affine Cipher
+One Time Pad
+Playfair Cipher
+Feistel Cipher
+
+all algorithms take as argument the plaintext/ciphertext and return the encrypted/decrypted equivelant. Some algorithms require extra arguments, specifically:
+
+caesars         : N         (short: key)
+one time pad    : key       (bytestream: randomly created bytestream key)
+playfair        : keymatrix (2x2 char: keymatrix created by playfair_keymatrix by passing the key as argument)
+feistel         : keys      ((BLOCK_SIZE / 2) x ROUNDS bytes: keymatrix to store the keys so decrypt can use them)
+
+one time pad and feistel also take the plaintext length as argument as they can produce end of string characters
+
+affine cipher uses a fixed linear equation of 11*x + 19, defined in crypto.h
+
+####################
+# Helper Functions #
+####################
+
+A number of helper functions were created in order to help with specific ciphers, specifically:
+
+random_key_create       : creates a random bytestream of given length using /dev/urandom
+
+otp_preprocess          : preprocesses the plaintext for one time pad to use, removing all characters not in our desired alphabet
+
+preprocess_plaintext    : preprocesses the plaintext for feistel to use, creating extra blocks and adding padding if needed
+feistel_flip            : flips (literally) the first and last 4 bytes of given address
+feistel_round           : the feistel round function as defined in the assignment
+
+playfair_keymatrix      : creates a keymatrix of 5x5 given the key and filling the rest of the alphabet
+playfair_encrypt_match  : matches the given 2 characters on the keymatrix in an encryption fashion (positive) and returns the encrypted ones
+playfair_decrypt_match  : matches the given 2 characters on the keymatrix in a decryption fashion (negative) and returns the decrypted ones
+playfair_preprocess     : preprocesses the plaintext for playfair to use, setting an X at the end if the text was odd lengthed or setting X on double char appearances
+                          and removing special characters not in the alphabet
+
+#############
+# Test File #
+#############
+
+A test file cipher.c was created in order to test the validity of the algorithms. Usage of the executable:
+
+./cipher input [-c | -a | -o | -p | -f] [cipher args] [-ENC | -DEC] [-out outputfile]
+
+(*)Cipher Selection(*)
+
+selection of the cipher algorithm happens on the 3rd argument. Each one represents a different algorithm, specifically:
+
+-c  : caesar's
+-a  : affine
+-o  : one time pad
+-p  : playfair
+-f  : feistel
+
+(*)Cipher Args(*)
+
+cipher args are the optional arguments for some of the algorithms. Specifically the following algorithms require extra arguments:
+
+-caesar         : N (short: the key number)
+-playfair       : key (string: the key to create the keymatrix and encrypt with)
+
+(*)Encryption/Decryption(*)
+
+you can select to either encrypt, decrypt or do a full encryption/decryption of the input.
+
+-ENC    : only ecrypt the input
+-DEC    : only decrypt the input
+
+if none is passed, the input will be both encrypted and decrypted and a structured message will be printed
+
+feistel and one time pad algorithms can not be individually encrypted/decrypted due to the keys' need to be stored in memory due to implementation =)
+
+(*)Output(*)
+
+an output file name can be passed using -out followed by the file name. If this argument is not passed, the result will be printed to stdout
+
+(*)Examples(*)
+
+for example:
+
+./cipher input.in -p "HELLO WORLD" -ENC -out output.out // encrypts the text input.in using the playfair cipher with key "HELLO WORLD" and stores it in output.out
+./cipher input.in -p "HELLO WORLD" // both encrypts and decrypts the text in input.in using the playfair cipher with key "HELLO WORLD" and prints a nice message =)
+./cipher output.out -p "HELLO WORLD" -DEC // decrypts the message we just encrypted and prints it in stdout
+
+./cipher input.in -c 6 -ENC // encrypts the text in input.in using caesar's cipher and key N = 6 and prints it in stdout
